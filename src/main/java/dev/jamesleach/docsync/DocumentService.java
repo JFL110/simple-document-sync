@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
  * Document management logic.
  */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 class DocumentService {
   static final String MASTER_DOCUMENT_ID = "$master$";
@@ -37,6 +39,7 @@ class DocumentService {
     try {
       classroomStorage.loadAll()
         .forEach(c -> {
+          log.info("Loading classroom {}", c.getId());
           var classroom = classrooms.computeIfAbsent(c.getId(), x -> new MutableClassroom());
           c.getDocuments().forEach(d -> classroom.getDocuments().put(d.getId(), d));
         });

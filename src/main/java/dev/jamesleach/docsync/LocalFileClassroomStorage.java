@@ -28,7 +28,7 @@ class LocalFileClassroomStorage {
     log.info("Loading all classrooms");
     initDir();
     return Files.walk(STORAGE_DIR)
-      .filter(f -> f.getFileName().endsWith(".classroom.json"))
+      .filter(f -> f.toString().endsWith(FILE_NAME_SUFFIX))
       .map(f -> {
         try {
           return objectMapper.readValue(f.toFile(), Classroom.class);
