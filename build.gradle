@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.4.1'
+    id 'io.spring.dependency-management' version "1.0.11.RELEASE"
+    id "io.freefair.lombok" version "5.3.0"
+    id "com.palantir.docker" version "0.26.0"
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+bootJar {
+    // Remove version number from bootJar
+    archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+}
+
+dependencies {
+    // Spring
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework:spring-websocket'
+    implementation 'org.springframework:spring-messaging'
+
+    // Generally useful java things
+    implementation group: 'com.google.guava', name: 'guava', version: '29.0-jre'
+
+    // Test utilities
+    testImplementation group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.4.0'
+    testImplementation 'com.github.stefanbirkner:system-rules:1.19.0'
+    testImplementation group: 'org.springframework', name: 'spring-test'
+    testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
+}

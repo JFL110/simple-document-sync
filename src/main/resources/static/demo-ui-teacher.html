@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@5.0.0/bundles/stomp.umd.min.js"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<section class="container">
+    <div class="one">
+        <textarea id="master-input" class="full-size-text"></textarea>
+    </div>
+    <div class="two">
+        <div id="student-documents"></div>
+    </div>
+</section>
+</body>
+<script>
+    const classroomId = "a";
+    const masterDocumentId = "$master$";
+    const source = document.getElementById('master-input');
+    const studentDocsDiv = document.getElementById('student-documents');
+    const studentDocuments = {};
+
+    const displayStudentMessages = () => {
+        studentDocsDiv.innerHTML = "All classroom documents:<br />" + JSON.stringify(studentDocuments);
+    }
+
+    const handleStudentMessage = doc => {
+        if(!doc || !doc.id || !doc.revisionTime || masterDocumentId == doc.id){
+            return;
+        }
+        const currentDocument = studentDocuments[doc.id];
+        if(currentDocument && currentDocument.revisionTime > doc.revisionTime){
+            return;
+        }
+        studentDocuments[doc.id] = doc;
+        displayStudentMessages();
+    };
+
+    const stompClient = new StompJs.Client({
+      brokerURL: 'ws://localhost:8080/classroom',
+      debug: function (str) {
+        console.log(str);
+      },
+      reconnectDelay: 100,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
+
+   stompClient.onConnect = function (frame) {
+      // Do something, all subscribes must be done is this callback
+      // This is needed because this will be executed after a (re)connect
+      stompClient.subscribe('/topic/classroom/' + classroomId + '/all-documents', function (message) {
+         message.body && handleStudentMessage(JSON.parse(message.body));
+      });
+
+       // Initial load of all classroom documents
+       fetch('http://localhost:8080/classroom/' + classroomId + '/all-documents')
+          .then(response => response.text())
+          .then(response => response &&
+            JSON.parse(response)
+            .forEach(handleStudentMessage)
+            );
+
+       // Initial load of master document
+       fetch('http://localhost:8080/classroom/' + classroomId + '/master-document')
+          .then(response => response.text())
+          .then(response => {
+            if(!response) return;
+            const parsedDoc = JSON.parse(response);
+            source.value = parsedDoc.content
+          });
+    };
+
+    stompClient.onStompError = function (frame) {
+      // Will be invoked in case of error encountered at Broker
+      console.log('Broker reported error: ' + frame.headers['message']);
+      console.log('Additional details: ' + frame.body);
+    };
+
+    stompClient.activate();
+
+    const inputHandler = function(e) {
+      stompClient.publish({
+          destination: '/app/classroom/' + classroomId + '/update-master',
+          body: e.target.value || " ", // replace empty strings with a space
+      });
+    }
+    source.addEventListener('input', inputHandler);
+    source.addEventListener('propertychange', inputHandler); // for IE8
+
+</script>
+</html>
