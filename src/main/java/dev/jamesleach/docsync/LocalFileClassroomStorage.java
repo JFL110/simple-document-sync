@@ -57,10 +57,9 @@ class LocalFileClassroomStorage {
     });
   }
 
-  @SuppressWarnings("all")
   private void initDir() {
     if (!STORAGE_DIR.toFile().exists()) {
-      STORAGE_DIR.toFile().mkdir();
+      boolean unused = STORAGE_DIR.toFile().mkdir();
     }
   }
 }
